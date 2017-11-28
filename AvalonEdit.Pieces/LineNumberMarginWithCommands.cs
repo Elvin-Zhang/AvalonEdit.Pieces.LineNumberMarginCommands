@@ -7,6 +7,7 @@ using System.Windows.Media;
 using ICSharpCode.AvalonEdit;
 using ICSharpCode.AvalonEdit.Editing;
 using ICSharpCode.AvalonEdit.Rendering;
+using ICSharpCode.AvalonEdit.Utils; // extension method this.CreateTypeface
 using System.Windows;
 using System.Windows.Controls;
 using System.Globalization;
@@ -36,8 +37,16 @@ namespace AvalonEdit.Pieces
             this.TextView = textView;*/
         }
 
+
+        Typeface typeface;
+        double emSize;
+
+
         protected override System.Windows.Size MeasureOverride(System.Windows.Size availableSize)
         {
+            typeface = this.CreateTypeface();
+            emSize = (double)GetValue(TextBlock.FontSizeProperty);
+
             FormattedText text = new FormattedText(
                 new string('9', maxLineNumberLength),
                 System.Globalization.CultureInfo.CurrentCulture,
