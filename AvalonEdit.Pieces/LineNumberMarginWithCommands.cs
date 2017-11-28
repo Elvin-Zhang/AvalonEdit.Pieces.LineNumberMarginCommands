@@ -7,13 +7,23 @@ using System.Windows.Media;
 using ICSharpCode.AvalonEdit;
 using ICSharpCode.AvalonEdit.Editing;
 using ICSharpCode.AvalonEdit.Rendering;
-using ICSharpCode.AvalonEdit.Utils; // extension method this.CreateTypeface
 using System.Windows;
 using System.Windows.Controls;
 using System.Globalization;
 
 namespace AvalonEdit.Pieces
 {
+    public static class Extensions
+    {
+        public static Typeface CreateTypeface(this FrameworkElement fe)
+        {
+            return new Typeface((FontFamily)fe.GetValue(TextBlock.FontFamilyProperty),
+                                (FontStyle)fe.GetValue(TextBlock.FontStyleProperty),
+                                (FontWeight)fe.GetValue(TextBlock.FontWeightProperty),
+                                (FontStretch)fe.GetValue(TextBlock.FontStretchProperty));
+        }
+    }
+
     // idea from: http://community.icsharpcode.net/forums/t/11706.aspx
     public class LineNumberMarginWithCommands : LineNumberMargin
     {
