@@ -33,7 +33,7 @@ namespace FindReplaceTesting
                 RunAfterWindowAvailable = (win, host) =>
                 {
                     var editor = host.GetTextEditor();
-                    var adorner1 = new FindReplace.GenericControlAdorner(editor.TextArea)
+                    var adorner1 = new AvalonEdit.Pieces.GenericControlAdorner(editor.TextArea)
                     {
                         Child = new Button { Content = "Hello World!" }
                     };
@@ -47,7 +47,7 @@ namespace FindReplaceTesting
 
 
         [TestMethod]
-        public async Task TestSearchReplacePanel()
+        public async Task TestPiece()
         {
             var result = await wpfTestUtil.Utility.runWithUIThread(new wpfTestUtil.RunOnUIArgs
             {
@@ -55,7 +55,7 @@ namespace FindReplaceTesting
                 {
                     var editor = host.GetTextEditor();
 
-                    FindReplace.SearchReplacePanel.Install(editor);
+                    AvalonEdit.Pieces.LineNumberMarginWithCommands.Install(editor);
                 }
             });
 

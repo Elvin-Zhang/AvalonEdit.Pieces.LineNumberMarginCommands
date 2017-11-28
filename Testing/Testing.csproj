@@ -25,7 +25,7 @@
   
   
   <ItemGroup>
-    <ProjectReference Include="..\FindReplace\AvalonEdit.Pieces.csproj" />
+    <ProjectReference Include="..\AvalonEdit.Pieces\AvalonEdit.Pieces.csproj" />
   </ItemGroup>
 
 
