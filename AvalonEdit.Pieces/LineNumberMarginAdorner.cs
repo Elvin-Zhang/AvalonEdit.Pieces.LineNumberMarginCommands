@@ -20,13 +20,13 @@ namespace AvalonEdit.Pieces
             
         }
 
-        public class LineNumberDisplay
+        public class LineNumberDisplayControlInfo
         {
             public LineNumberMarginWithCommands.LineInfo LineInfo { get; set; }
-            public FrameworkElement Control { get; set; }
+            public LineNumberDisplay Control { get; set; }
         }
 
-        private List<LineNumberDisplay> Controls = new List<LineNumberDisplay>();
+        private List<LineNumberDisplayControlInfo> Controls = new List<LineNumberDisplayControlInfo>();
         private List<Visual> visualChildTracker = new List<Visual>();
 
         private void ClearVisualChilds()
@@ -53,14 +53,14 @@ namespace AvalonEdit.Pieces
             {
                 foreach( var info in margin.uiLineInfoList)
                 {
-                    var ctrl = new LineNumberDisplay
+                    var ctrl = new LineNumberDisplayControlInfo
                     {
-                        Control = new Button()
-                        {
-                            Content = info.Number
-                        },
                         LineInfo = info
                     };
+
+                    ctrl.Control = new LineNumberDisplay();
+                    ctrl.Control.Model.LineNumber = ctrl.LineInfo.Number;
+
                     this.Controls.Add(ctrl);
                     this.AddVisualChildWithTracking(ctrl.Control);
                 }
