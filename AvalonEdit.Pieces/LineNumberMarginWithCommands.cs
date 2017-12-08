@@ -141,7 +141,7 @@ namespace AvalonEdit.Pieces
                     info.uiTotalAvailableWidth = renderSize.Width;
                     info.uiXPos = renderSize.Width - text.Width;
 
-                    drawingContext.DrawText(text, new Point(info.uiXPos,info.uiYPos));
+                    //drawingContext.DrawText(text, new Point(info.uiXPos,info.uiYPos));
 
                     this.uiLineInfoList.Add(info);
                 }
