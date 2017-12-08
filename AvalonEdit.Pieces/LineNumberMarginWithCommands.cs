@@ -12,6 +12,8 @@ using System.Windows.Controls;
 using System.Globalization;
 using System.Windows.Threading;
 using System.Windows.Documents;
+using System.Windows.Shapes;
+using System.Windows.Data;
 
 namespace AvalonEdit.Pieces
 {
@@ -43,9 +45,22 @@ namespace AvalonEdit.Pieces
             };
 
             _editor.ShowLineNumbers = false; // turn off the built in
-            _editor.TextArea.LeftMargins.Add(me);
-            _editor.TextArea.LeftMargins.Add(DottedLineMargin.Create());
 
+            addLineNumberMarching(_editor, me);
+
+        }
+
+
+        private static void addLineNumberMarching(TextEditor _editor, LineNumberMargin lineNumbers)
+        {
+            var leftMargins = _editor.TextArea.LeftMargins;
+
+            Line line = (Line)DottedLineMargin.Create();
+            leftMargins.Insert(0, lineNumbers);
+            leftMargins.Insert(1, line);
+            var lineNumbersForeground = new Binding("LineNumbersForeground") { Source = _editor };
+            line.SetBinding(Line.StrokeProperty, lineNumbersForeground);
+            lineNumbers.SetBinding(Control.ForegroundProperty, lineNumbersForeground);
 
         }
 
