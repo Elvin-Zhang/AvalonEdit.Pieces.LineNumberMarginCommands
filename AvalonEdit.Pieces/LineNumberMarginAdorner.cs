@@ -97,12 +97,12 @@ namespace AvalonEdit.Pieces
         {
             if(this.Controls.Any())
             {
-                var first = this.Controls.First();
+                var last = this.Controls.Last();
                 foreach( var ctrl in this.Controls)
                 {
                     ctrl.Control.Measure(constraint);
                 }
-                return first.Control.DesiredSize;
+                return last.Control.DesiredSize;
             }else
             {
                 return new Size(0,0);
@@ -115,14 +115,14 @@ namespace AvalonEdit.Pieces
             
             if(this.Controls.Any())
             {
-                var first = this.Controls.First();
+                var last = this.Controls.Last();
 
                 foreach(var ctrl in this.Controls)
                 {
-                    ctrl.Control.Arrange(new Rect(new Point(ctrl.LineInfo.uiXPos, ctrl.LineInfo.uiYPos), finalSize));
+                    ctrl.Control.Arrange(new Rect(new Point(0, ctrl.LineInfo.uiYPos), finalSize));
                 }
 
-                return new Size(first.Control.ActualWidth, first.Control.ActualHeight);
+                return new Size(last.Control.ActualWidth, last.Control.ActualHeight);
             }else
             {
                 return new Size(0, 0);

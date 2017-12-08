@@ -88,6 +88,8 @@ namespace AvalonEdit.Pieces
             public int Number { get; set; }
             public double uiXPos { get; set; }
             public double uiYPos { get; set; }
+
+            public double uiTotalAvailableWidth { get; set; }
         }
 
         public List<LineInfo> uiLineInfoList { get; set; } = new List<LineInfo>();
@@ -136,6 +138,7 @@ namespace AvalonEdit.Pieces
                         typeface, emSize, foreground
                     );
 
+                    info.uiTotalAvailableWidth = renderSize.Width;
                     info.uiXPos = renderSize.Width - text.Width;
 
                     drawingContext.DrawText(text, new Point(info.uiXPos,info.uiYPos));
