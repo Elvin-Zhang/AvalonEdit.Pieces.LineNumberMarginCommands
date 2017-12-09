@@ -73,7 +73,7 @@ namespace AvalonEdit.Pieces
 
             this.TextView = textView;*/
 
-            this.lineNumbersChangedDelayTimer.Tick += LineNumbersChangedDelayTimer_Tick;
+            //this.lineNumbersChangedDelayTimer.Tick += LineNumbersChangedDelayTimer_Tick;
         }
 
 
@@ -112,12 +112,12 @@ namespace AvalonEdit.Pieces
 
         // do a delayed event when the line info list is updated
         public event Action<object, EventArgs> LineNumbersChangedDelayedEvent;
-
+        /*
         DispatcherTimer lineNumbersChangedDelayTimer = new DispatcherTimer
         {
             Interval = TimeSpan.FromMilliseconds(400)
         };
-
+        
 
         private void LineNumbersChangedDelayTimer_Tick(object sender, EventArgs e)
         {
@@ -127,12 +127,12 @@ namespace AvalonEdit.Pieces
                 this.LineNumbersChangedDelayedEvent(this, new EventArgs());
             }
         }
-
+        */
 
 
         protected override void OnRender(DrawingContext drawingContext)
         {
-            lineNumbersChangedDelayTimer.Stop(); // if we have ticks going then stop it because we've rendered line numbers again
+            //lineNumbersChangedDelayTimer.Stop(); // if we have ticks going then stop it because we've rendered line numbers again
             this.uiLineInfoList.Clear();
             TextView textView = this.TextView;
             Size renderSize = this.RenderSize;
@@ -162,8 +162,13 @@ namespace AvalonEdit.Pieces
                 }
 
                 // finished processing line numbers
-                
-                lineNumbersChangedDelayTimer.Start(); // this will fire off that it changed if 
+
+                if (this.LineNumbersChangedDelayedEvent != null)
+                {
+                    this.LineNumbersChangedDelayedEvent(this, new EventArgs());
+                }
+
+                //lineNumbersChangedDelayTimer.Start(); // this will fire off that it changed if 
             }
         }
 
