@@ -8,6 +8,31 @@
              x:Name="lineNumberDisplayCtl"
              d:DesignHeight="300" d:DesignWidth="300">
     <DockPanel>
-        <Button Content="{Binding Path=Model.LineNumber, ElementName=lineNumberDisplayCtl}" />
+        <TextBlock Text="{Binding Path=Model.LineNumber, ElementName=lineNumberDisplayCtl}" 
+                   Name="lineNumberTextBlock" 
+                   MouseEnter="lineNumberTextBlock_MouseEnter">
+            <TextBlock.Style>
+                <Style TargetType="TextBlock">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Path=Model.IsCommandMode, ElementName=lineNumberDisplayCtl}" Value="true">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </TextBlock.Style>
+        </TextBlock>
+        <TextBox Text="{Binding Path=Model.CommandText, ElementName=lineNumberDisplayCtl}"
+                 Name="lineNumberTextBox"
+                 MouseLeave="lineNumberTextBox_MouseLeave">
+            <TextBox.Style>
+                <Style TargetType="TextBox">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Path=Model.IsCommandMode, ElementName=lineNumberDisplayCtl}" Value="false">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </TextBox.Style>
+        </TextBox>
     </DockPanel>
 </UserControl>

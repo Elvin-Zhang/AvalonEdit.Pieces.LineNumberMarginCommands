@@ -16,6 +16,19 @@ namespace AvalonEdit.Pieces
         }
 
 
+        public bool IsCommandMode
+        {
+            get { return this.GetValue(() => this.IsCommandMode); }
+            set { this.SetValue(() => this.IsCommandMode, value); }
+        }
+
+        public string CommandText
+        {
+            get { return this.GetValue(() => this.CommandText); }
+            set { this.SetValue(() => this.CommandText, value); }
+        }
+
+
 
     }
 }
