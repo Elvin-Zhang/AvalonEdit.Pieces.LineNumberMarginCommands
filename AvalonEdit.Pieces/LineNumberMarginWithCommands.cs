@@ -10,6 +10,10 @@ using ICSharpCode.AvalonEdit.Rendering;
 using System.Windows;
 using System.Windows.Controls;
 using System.Globalization;
+using System.Windows.Threading;
+using System.Windows.Documents;
+using System.Windows.Shapes;
+using System.Windows.Data;
 
 namespace AvalonEdit.Pieces
 {
@@ -31,10 +35,33 @@ namespace AvalonEdit.Pieces
         public static void Install( TextEditor _editor)
         {
             var me = new LineNumberMarginWithCommands(_editor);
-            
+
+            me.Loaded += (_sender, args) =>
+            {
+                var adorner1 = new LineNumberMarginAdorner(me);
+                // it's got to be displayed before adorning I think
+                // adorn it
+                AdornerLayer.GetAdornerLayer(me).Add(adorner1);
+            };
+
             _editor.ShowLineNumbers = false; // turn off the built in
-            _editor.TextArea.LeftMargins.Add(me);
-            _editor.TextArea.LeftMargins.Add(DottedLineMargin.Create());
+
+            addLineNumberMarching(_editor, me);
+
+        }
+
+
+        private static void addLineNumberMarching(TextEditor _editor, LineNumberMargin lineNumbers)
+        {
+            var leftMargins = _editor.TextArea.LeftMargins;
+
+            Line line = (Line)DottedLineMargin.Create();
+            leftMargins.Insert(0, lineNumbers);
+            leftMargins.Insert(1, line);
+            var lineNumbersForeground = new Binding("LineNumbersForeground") { Source = _editor };
+            line.SetBinding(Line.StrokeProperty, lineNumbersForeground);
+            lineNumbers.SetBinding(Control.ForegroundProperty, lineNumbersForeground);
+
         }
 
         public LineNumberMarginWithCommands(TextEditor _editor)
@@ -45,6 +72,8 @@ namespace AvalonEdit.Pieces
             };
 
             this.TextView = textView;*/
+
+            //this.lineNumbersChangedDelayTimer.Tick += LineNumbersChangedDelayTimer_Tick;
         }
 
 
@@ -69,8 +98,42 @@ namespace AvalonEdit.Pieces
         }
 
 
+        public class LineInfo
+        {
+            public int Number { get; set; }
+            public double uiXPos { get; set; }
+            public double uiYPos { get; set; }
+
+            public double uiTotalAvailableWidth { get; set; }
+        }
+
+        public List<LineInfo> uiLineInfoList { get; set; } = new List<LineInfo>();
+
+
+        // do a delayed event when the line info list is updated
+        public event Action<object, EventArgs> LineNumbersChangedDelayedEvent;
+        /*
+        DispatcherTimer lineNumbersChangedDelayTimer = new DispatcherTimer
+        {
+            Interval = TimeSpan.FromMilliseconds(400)
+        };
+        
+
+        private void LineNumbersChangedDelayTimer_Tick(object sender, EventArgs e)
+        {
+            this.lineNumbersChangedDelayTimer.Stop(); // don't fire this again
+            if( this.LineNumbersChangedDelayedEvent != null)
+            {
+                this.LineNumbersChangedDelayedEvent(this, new EventArgs());
+            }
+        }
+        */
+
+
         protected override void OnRender(DrawingContext drawingContext)
         {
+            //lineNumbersChangedDelayTimer.Stop(); // if we have ticks going then stop it because we've rendered line numbers again
+            this.uiLineInfoList.Clear();
             TextView textView = this.TextView;
             Size renderSize = this.RenderSize;
             if (textView != null && textView.VisualLinesValid)
@@ -78,16 +141,34 @@ namespace AvalonEdit.Pieces
                 var foreground = (Brush)GetValue(Control.ForegroundProperty);
                 foreach (VisualLine line in textView.VisualLines)
                 {
-                    int lineNumber = line.FirstDocumentLine.LineNumber;
+                    var info = new LineInfo();
+                    info.Number = line.FirstDocumentLine.LineNumber;
+                    info.uiYPos = line.VisualTop - textView.VerticalOffset;
+                    
+
                     FormattedText text = new FormattedText(
-                        lineNumber.ToString(CultureInfo.CurrentCulture),
+                        info.Number.ToString(CultureInfo.CurrentCulture),
                         CultureInfo.CurrentCulture,
                         FlowDirection.LeftToRight,
                         typeface, emSize, foreground
                     );
-                    drawingContext.DrawText(text, new Point(renderSize.Width - text.Width,
-                                                            line.VisualTop - textView.VerticalOffset));
+
+                    info.uiTotalAvailableWidth = renderSize.Width;
+                    info.uiXPos = renderSize.Width - text.Width;
+
+                    //drawingContext.DrawText(text, new Point(info.uiXPos,info.uiYPos));
+
+                    this.uiLineInfoList.Add(info);
                 }
+
+                // finished processing line numbers
+
+                if (this.LineNumbersChangedDelayedEvent != null)
+                {
+                    this.LineNumbersChangedDelayedEvent(this, new EventArgs());
+                }
+
+                //lineNumbersChangedDelayTimer.Start(); // this will fire off that it changed if 
             }
         }
 
