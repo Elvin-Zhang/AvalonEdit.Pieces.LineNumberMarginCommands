@@ -36,24 +36,8 @@ namespace AvalonEdit.Pieces
         public LineNumberDisplay()
         {
             InitializeComponent();
-
-            this.Model = new LineNumberDisplayModel();
-            this.Model.LineNumber = 99;
         }
 
-
-        private void lineNumberTextBlock_MouseEnter(object sender, MouseEventArgs e)
-        {
-            var tb = sender as TextBlock;
-            this.Model.IsCommandMode = true;
-        }
-
-        private void lineNumberTextBox_MouseLeave(object sender, MouseEventArgs e)
-        {
-            var tb = sender as TextBox;
-            this.Model.IsCommandMode = false;
-
-        }
 
 
 

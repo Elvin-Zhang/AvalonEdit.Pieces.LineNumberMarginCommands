@@ -17,28 +17,19 @@ using System.Windows.Data;
 
 namespace AvalonEdit.Pieces
 {
-    public static class Extensions
-    {
-        public static Typeface CreateTypeface(this FrameworkElement fe)
-        {
-            return new Typeface((FontFamily)fe.GetValue(TextBlock.FontFamilyProperty),
-                                (FontStyle)fe.GetValue(TextBlock.FontStyleProperty),
-                                (FontWeight)fe.GetValue(TextBlock.FontWeightProperty),
-                                (FontStretch)fe.GetValue(TextBlock.FontStretchProperty));
-        }
-    }
 
     // idea from: http://community.icsharpcode.net/forums/t/11706.aspx
     public class LineNumberMarginWithCommands : LineNumberMargin
     {
 
-        public static void Install( TextEditor _editor)
+
+        public static void Install(TextEditor _editor)
         {
             var me = new LineNumberMarginWithCommands(_editor);
 
             me.Loaded += (_sender, args) =>
             {
-                var adorner1 = new LineNumberMarginAdorner(me);
+                var adorner1 = new LineNumberMarginAdorner(me, me.previousLineNumberDisplaySize);
                 // it's got to be displayed before adorning I think
                 // adorn it
                 AdornerLayer.GetAdornerLayer(me).Add(adorner1);
@@ -66,97 +57,105 @@ namespace AvalonEdit.Pieces
 
         public LineNumberMarginWithCommands(TextEditor _editor)
         {
-            /*TextView textView = new TextView()
-            {
-                Document = _editor.Document
-            };
 
-            this.TextView = textView;*/
-
-            //this.lineNumbersChangedDelayTimer.Tick += LineNumbersChangedDelayTimer_Tick;
         }
 
 
-        Typeface typeface;
-        double emSize;
+        private int previousMaxLineNumberLength = -1;
+        private System.Windows.Size previousLineNumberDisplaySize; // only change this when line number length changes
 
+
+        private static System.Windows.Size recalculateLineNumberDisplayControlSize(int maxLineNumberLength,
+                                                                            double lineHeight,
+                                                                            System.Windows.Size availableSize)
+        {
+            var lineNumberDisplayExampleCtrl = new LineNumberDisplay();
+            lineNumberDisplayExampleCtrl.Model = new LineNumberDisplayModel();
+            lineNumberDisplayExampleCtrl.Model.ControlHeight = lineHeight;
+            lineNumberDisplayExampleCtrl.Model.IsInView = true;
+            lineNumberDisplayExampleCtrl.Model.LineNumber = Convert.ToInt32(new string('9', maxLineNumberLength));
+
+            lineNumberDisplayExampleCtrl.Measure(availableSize);
+            availableSize.Width = 1;
+            lineNumberDisplayExampleCtrl.Arrange(new Rect(availableSize));
+
+            return new System.Windows.Size(lineNumberDisplayExampleCtrl.ActualWidth, lineHeight);
+        }
 
         protected override System.Windows.Size MeasureOverride(System.Windows.Size availableSize)
         {
-            typeface = this.CreateTypeface();
-            emSize = (double)GetValue(TextBlock.FontSizeProperty);
+            if (this.maxLineNumberLength != this.previousMaxLineNumberLength)
+            {
+                double lineHeight = 1;
+                if (this.TextView != null && this.TextView.VisualLinesValid)
+                {
+                    lineHeight = this.TextView.VisualLines.First().Height;
+                }
 
-            FormattedText text = new FormattedText(
-                new string('9', maxLineNumberLength),
-                System.Globalization.CultureInfo.CurrentCulture,
-                FlowDirection.LeftToRight,
-                typeface,
-                emSize,
-                (Brush)GetValue(Control.ForegroundProperty)
-            );
-            return new Size(text.Width, 0);
+                this.previousLineNumberDisplaySize = recalculateLineNumberDisplayControlSize(this.maxLineNumberLength, lineHeight, availableSize);
+
+                if (this.MaxLineNumberLengthChanged != null)
+                {
+                    this.MaxLineNumberLengthChanged(this, new MaxLineNumberLengthChangedEventArgs
+                    {
+                        NewSize = this.previousLineNumberDisplaySize
+                    });
+                }
+            }
+
+            return new Size(this.previousLineNumberDisplaySize.Width, 0);
         }
 
 
-        public class LineInfo
-        {
-            public int Number { get; set; }
-            public double uiXPos { get; set; }
-            public double uiYPos { get; set; }
 
-            public double uiTotalAvailableWidth { get; set; }
-        }
 
         public List<LineInfo> uiLineInfoList { get; set; } = new List<LineInfo>();
 
 
         // do a delayed event when the line info list is updated
         public event Action<object, EventArgs> LineNumbersChangedDelayedEvent;
-        /*
-        DispatcherTimer lineNumbersChangedDelayTimer = new DispatcherTimer
-        {
-            Interval = TimeSpan.FromMilliseconds(400)
-        };
-        
 
-        private void LineNumbersChangedDelayTimer_Tick(object sender, EventArgs e)
+
+
+        public event Action<object, MaxLineNumberLengthChangedEventArgs> MaxLineNumberLengthChanged;
+
+
+        private bool doWeNeedToRedoLineNumberDisplay(IReadOnlyCollection<VisualLine> visualLines,
+                                                       List<LineInfo> linesDisplayed)
         {
-            this.lineNumbersChangedDelayTimer.Stop(); // don't fire this again
-            if( this.LineNumbersChangedDelayedEvent != null)
+            var firstVisual = visualLines.FirstOrDefault();
+            var lastVisual = visualLines.LastOrDefault();
+
+            var firstLine = linesDisplayed.FirstOrDefault();
+            var lastLine = linesDisplayed.LastOrDefault();
+
+            if (firstVisual?.FirstDocumentLine?.LineNumber == firstLine?.Number
+                && lastVisual?.FirstDocumentLine?.LineNumber == lastLine?.Number
+                )
             {
-                this.LineNumbersChangedDelayedEvent(this, new EventArgs());
+                return false;
             }
-        }
-        */
 
+            return true;
+        }
 
         protected override void OnRender(DrawingContext drawingContext)
         {
-            //lineNumbersChangedDelayTimer.Stop(); // if we have ticks going then stop it because we've rendered line numbers again
-            this.uiLineInfoList.Clear();
+
             TextView textView = this.TextView;
-            Size renderSize = this.RenderSize;
-            if (textView != null && textView.VisualLinesValid)
+            if (textView != null
+                && textView.VisualLinesValid
+                && doWeNeedToRedoLineNumberDisplay(textView.VisualLines, this.uiLineInfoList)
+                )
             {
-                var foreground = (Brush)GetValue(Control.ForegroundProperty);
+
+                // repopulate the ui list
+                this.uiLineInfoList.Clear();
                 foreach (VisualLine line in textView.VisualLines)
                 {
                     var info = new LineInfo();
                     info.Number = line.FirstDocumentLine.LineNumber;
-                    info.uiYPos = line.VisualTop - textView.VerticalOffset;
-                    
-
-                    FormattedText text = new FormattedText(
-                        info.Number.ToString(CultureInfo.CurrentCulture),
-                        CultureInfo.CurrentCulture,
-                        FlowDirection.LeftToRight,
-                        typeface, emSize, foreground
-                    );
-
-                    info.uiTotalAvailableWidth = renderSize.Width;
-                    info.uiXPos = renderSize.Width - text.Width;
-
-                    //drawingContext.DrawText(text, new Point(info.uiXPos,info.uiYPos));
+                    info.RenderSize = previousLineNumberDisplaySize;
 
                     this.uiLineInfoList.Add(info);
                 }
@@ -168,9 +167,11 @@ namespace AvalonEdit.Pieces
                     this.LineNumbersChangedDelayedEvent(this, new EventArgs());
                 }
 
-                //lineNumbersChangedDelayTimer.Start(); // this will fire off that it changed if 
+
             }
         }
+
+
 
     }
 }
