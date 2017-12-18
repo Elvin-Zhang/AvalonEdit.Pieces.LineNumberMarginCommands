@@ -14,28 +14,25 @@ namespace AvalonEdit.Pieces
     public class LineNumberMarginAdorner : Adorner
     {
 
-        public LineNumberMarginAdorner(LineNumberMarginWithCommands marginElement,
-                                    System.Windows.Size lineNumberDisplaySize)
+        public LineNumberMarginAdorner(LineNumberMarginWithCommands marginElement)
             : base(marginElement)
         {
             this.listView = new LineNumbersListView();
-            this.listView.Width = lineNumberDisplaySize.Width; // constrain width
             this.AddVisualChild(this.listView); // this has to be there for events and interaction to work
+
+            this.listView.Loaded += (_sender, _args) =>
+            {
+                trackListViewWidth();
+            };
+
             // update the adorner layer
             AdornerLayer.GetAdornerLayer(marginElement).Update();
 
             // setup events that we will need to use to modify our list of line numbers
             marginElement.LineNumbersChangedDelayedEvent += MarginElement_LineNumbersChangedDelayedEvent;
-            marginElement.MaxLineNumberLengthChanged += MarginElement_MaxLineNumberLengthChanged;
 
             // need to initially populate line numbers that are already there
             populateLineNumbers(marginElement.uiLineInfoList, this.listView.LineNumbers);
-        }
-
-        private void MarginElement_MaxLineNumberLengthChanged(object sender, MaxLineNumberLengthChangedEventArgs args)
-        {
-            // width of list needs to change
-            this.listView.Width = args.NewSize.Width;
         }
 
 
@@ -62,7 +59,7 @@ namespace AvalonEdit.Pieces
                 {
                     IsInView = true,
                     LineNumber = t.Number,
-                    ControlHeight = t.RenderSize.Height
+                    ControlHeight = t.LineHeight
                 });
             }
 
@@ -105,9 +102,37 @@ namespace AvalonEdit.Pieces
         }
 
 
+        double previousListViewWidth = 0;
+
+        public event Action<object, LineNumberMarginListViewWidthChangedEventArgs> LineNumberListViewWidthChanged;
+
+        public class LineNumberMarginListViewWidthChangedEventArgs : EventArgs
+        {
+            public double Width { get; set; }
+        }
+
+
+        private void trackListViewWidth()
+        {
+            if (listView.DesiredSize.Width != previousListViewWidth)
+            {
+                previousListViewWidth = listView.DesiredSize.Width;
+                // fire off that width of listview changed
+                if (this.LineNumberListViewWidthChanged != null)
+                {
+                    this.LineNumberListViewWidthChanged(this, new LineNumberMarginListViewWidthChangedEventArgs
+                    {
+                        Width = previousListViewWidth
+                    });
+                }
+            }
+        }
+
+
         protected override Size MeasureOverride(Size constraint)
         {
             listView.Measure(constraint);
+            trackListViewWidth();
             return listView.DesiredSize;
         }
 
