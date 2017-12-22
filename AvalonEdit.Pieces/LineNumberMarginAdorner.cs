@@ -20,7 +20,7 @@ namespace AvalonEdit.Pieces
             this.listView = new LineNumbersListView();
             this.AddVisualChild(this.listView); // this has to be there for events and interaction to work
 
-            this.listView.Loaded += (_sender, _args) =>
+            this.listView.SizeChanged += (_sender, _args) =>
             {
                 trackListViewWidth();
             };
@@ -132,7 +132,6 @@ namespace AvalonEdit.Pieces
         protected override Size MeasureOverride(Size constraint)
         {
             listView.Measure(constraint);
-            trackListViewWidth();
             return listView.DesiredSize;
         }
 
